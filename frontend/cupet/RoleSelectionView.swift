@@ -8,51 +8,27 @@
 import SwiftUI
 
 struct RoleSelectionView: View {
+    // MARK: - Properties
     @State private var selectedRole: UserRole?
     @State private var navigateNext = false
     @Environment(\.presentationMode) var presentationMode
     
-    let cornellRed = Color(hex: "B31B1B")
+    private let primaryRed = Color(hex: "B31B1B")
     
+    // MARK: - Body
     var body: some View {
         ZStack {
-            Color(hex: "FFFAF5")
-                .ignoresSafeArea()
+            Color(hex: "FFFAF5").ignoresSafeArea()
             
             VStack(spacing: 25) {
-                // Simple title
-                VStack(spacing: 10) {
-                    Text("I am a...")
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundColor(cornellRed)
-                }
-                .padding(.top, 70)
+                Text("I am a...")
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundColor(primaryRed)
+                    .padding(.top, 70)
                 
                 Spacer()
                 
-                Button(action: {
-                    selectedRole = .owner
-                    navigateNext = true
-                }) {
-                    RoleCardView(
-                        title: "Pet Owner",
-                        description: "Find a reliable sitter for your pet",
-                        iconName: "pawprint.fill",
-                        isSelected: selectedRole == .owner
-                    )
-                }
-                
-                Button(action: {
-                    selectedRole = .sitter
-                    navigateNext = true
-                }) {
-                    RoleCardView(
-                        title: "Pet Sitter",
-                        description: "Connect with pets needing care",
-                        iconName: "person.fill",
-                        isSelected: selectedRole == .sitter
-                    )
-                }
+                roleButtons
                 
                 Spacer()
                 
@@ -73,37 +49,69 @@ struct RoleSelectionView: View {
                         Image(systemName: "chevron.left")
                         Text("Back")
                     }
-                    .foregroundColor(cornellRed)
+                    .foregroundColor(primaryRed)
                 }
             }
         }
         .navigationBarBackButtonHidden(true)
     }
     
+    // MARK: - UI Components
+    private var roleButtons: some View {
+        VStack(spacing: 25) {
+            Button(action: {
+                selectedRole = .owner
+                navigateNext = true
+            }) {
+                RoleCardView(
+                    title: "Pet Owner",
+                    description: "Find a reliable sitter for your pet",
+                    iconName: "pawprint.fill",
+                    isSelected: selectedRole == .owner
+                )
+            }
+            
+            Button(action: {
+                selectedRole = .sitter
+                navigateNext = true
+            }) {
+                RoleCardView(
+                    title: "Pet Sitter",
+                    description: "Connect with pets needing care",
+                    iconName: "person.fill",
+                    isSelected: selectedRole == .sitter
+                )
+            }
+        }
+    }
+    
+    // MARK: - Navigation
     @ViewBuilder
     private func getDestinationView() -> some View {
         if selectedRole == .owner {
-            Text("Owner flow will be implemented after midpoint LOL sorry")
-                .navigationTitle("Coming Soon")
+            OwnerHomeView()
         } else {
             PetSitterRegistrationView()
         }
     }
 }
 
+// MARK: - RoleCardView
 struct RoleCardView: View {
+    // MARK: - Properties
     let title: String
     let description: String
     let iconName: String
     let isSelected: Bool
     
-    let cornellRed = Color(hex: "B31B1B")
+    private let primaryRed = Color(hex: "B31B1B")
     
+    // MARK: - Body
     var body: some View {
         HStack {
             Image(systemName: iconName)
                 .font(.system(size: 24))
-                .foregroundColor(isSelected ? .white : cornellRed)
+                .foregroundColor(isSelected ? .white : primaryRed)
                 .frame(width: 50)
                 .padding(.leading, 10)
             
@@ -127,18 +135,16 @@ struct RoleCardView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? cornellRed : Color.white)
+                .fill(isSelected ? primaryRed : Color.white)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(cornellRed, lineWidth: isSelected ? 0 : 2)
+                .stroke(primaryRed, lineWidth: isSelected ? 0 : 2)
         )
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
 
-
 #Preview {
     RoleSelectionView()
 }
-
