@@ -66,9 +66,9 @@ struct PetSitterRegistrationView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 30)
                 
+                // NavigationLink
                 NavigationLink(
-                    destination: Text("Pet Browse Screen")
-                        .navigationTitle("Browse Pets"),
+                    destination: PetSitterView().navigationBarBackButtonHidden(true),
                     isActive: $navigateToBrowse,
                     label: { EmptyView() }
                 )
