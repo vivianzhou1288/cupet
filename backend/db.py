@@ -43,14 +43,14 @@ class User(db.Model):
             data["pets_posting"] = [pet.serialize(include_owner=False) for pet in self.pets_posting]
         return data
 
-    @classmethod
-    def get_user_by_id(cls, user_id):
-        return cls.query.get(user_id)
+    # @classmethod
+    # def get_user_by_id(cls, user_id):
+    #     return cls.query.get(user_id)
 
-    def create_user(self):
-        db.session.add(self)
-        db.session.commit()
-        return self
+    # def create_user(self):
+    #     db.session.add(self)
+    #     db.session.commit()
+    #     return self
 
 
 class Pet(db.Model):
@@ -117,24 +117,24 @@ class Pet(db.Model):
             }
         return data
 
-    @classmethod
-    def get_get_all_pets(cls):
-        return cls.query.all()
+    # @classmethod
+    # def get_get_all_pets(cls):
+    #     return cls.query.all()
 
-    @classmethod
-    def get_pets_by_id(cls, pet_id):
-        return cls.query.get(pet_id)
+    # @classmethod
+    # def get_pets_by_id(cls, pet_id):
+    #     return cls.query.get(pet_id)
 
-    def post_pet(self):
-        db.session.add(self)
-        db.session.commit()
-        return self
+    # def post_pet(self):
+    #     db.session.add(self)
+    #     db.session.commit()
+    #     return self
 
-    @classmethod
-    def del_pet_by_id(cls, pet_id):
-        pet = cls.query.get(pet_id)
-        if pet:
-            db.session.delete(pet)
-            db.session.commit()
-            return True
-        return False
+    # @classmethod
+    # def del_pet_by_id(cls, pet_id):
+    #     pet = cls.query.get(pet_id)
+    #     if pet:
+    #         db.session.delete(pet)
+    #         db.session.commit()
+    #         return True
+    #     return False

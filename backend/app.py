@@ -36,12 +36,30 @@ def signup():
         return failure_response("Email already registered", 400)
 
     user = User(name=name, email=email, password=password, role=role)
-    user.create_user()
+    db.session.add(user)
+    db.session.commit()
     return success_response(user.serialize(), 201)
+
+@app.route("/login/", methods=["POST"])
+def login():
+    body = json.loads(request.data)
+    
+    email = body.get("email")
+    password = body.get("password")
+
+    if not email or not password:
+        return failure_response("Missing email or password", 400)
+
+    user = User.query.filter_by(email=email).first()
+
+    if user is None or not user.check_password(password):
+        return failure_response("Invalid email or password", 401)
+
+    return success_response(user.serialize())
 
 @app.route("/users/<int:user_id>/", methods=["GET"])
 def get_user(user_id):
-    user = User.get_user_by_id(user_id)
+    user = User.query.get(user_id)
     if not user:
         return failure_response("User not found", 404)
     return success_response(user.serialize())
@@ -50,12 +68,14 @@ def get_user(user_id):
 
 @app.route("/pets/", methods=["GET"])
 def get_all_pets():
-    pets = Pet.get_get_all_pets()
-    return success_response([p.serialize() for p in pets])
+    pets = []
+    for pet in Pet.query.all():
+        pets.append(pet.serialize())
+    return success_response({"pet-postings": pets})
 
 @app.route("/pets/<int:pet_id>/", methods=["GET"])
 def get_pet(pet_id):
-    pet = Pet.get_pets_by_id(pet_id)
+    pet = Pet.query.get(pet_id)
     if not pet:
         return failure_response("Pet not found", 404)
     return success_response(pet.serialize())
@@ -63,33 +83,48 @@ def get_pet(pet_id):
 @app.route("/pets/", methods=["POST"])
 def create_pet():
     body = json.loads(request.data)
-    required = ("owner_id", "name", "pet_type", "activeness",
-                "description", "start_date", "end_date", "location")
-    if not all(body.get(k) for k in required):
-        return failure_response("Missing required fields", 400)
+    owner_id = body.get("owner_id")
+    name = body.get("name")
+    pet_type = body.get("pet_type")
+    activeness = body.get("activeness")
+    description = body.get("description")
+    start_date = body.get("start_date")
+    end_date = body.get("end_date")
+    location = body.get("location")
 
-    owner = User.get_user_by_id(body["owner_id"])
+    if not all([owner_id, name, pet_type, activeness, description, start_date, end_date, location]):
+        return failure_response("Missing required fields", 400)
+    
+    owner = User.query.get(owner_id)
     if not owner or owner.role != "owner":
         return failure_response("Invalid owner", 400)
 
     pet = Pet(
         owner=owner,
-        name=body["name"],
-        pet_type=body["pet_type"],
-        activeness=body["activeness"],
-        description=body["description"],
-        start_date=body["start_date"],
-        end_date=body["end_date"],
-        location=body["location"]
+        name=name,
+        pet_type=pet_type,
+        activeness=activeness,
+        description=description,
+        start_date=start_date,
+        end_date=end_date,
+        location=location
     )
-    pet.post_pet()
+
+    db.session.add(pet)
+    db.session.commit()
     return success_response(pet.serialize(), 201)
 
 @app.route("/pets/<int:pet_id>/", methods=["DELETE"])
-def delete_pet(pet_id):
-    if not Pet.del_pet_by_id(pet_id):
+def delete_pet(pet_id):    
+    pet = Pet.query.filter_by(id=pet_id).first()
+    if pet is None:
         return failure_response("Pet not found", 404)
-    return success_response({"message": "Pet deleted"}, 200)
+
+    serialized_pet = pet.serialize()
+
+    db.session.delete(pet)
+    db.session.commit()
+    return success_response(serialized_pet)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
