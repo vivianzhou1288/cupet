@@ -244,6 +244,7 @@ struct PetSitterView: View {
 // MARK: - Pet Sitting Request Cell
 struct PetSittingRequestCell: View {
     let pet: Pet
+    private let primaryRed = Color(hex: "B31B1B")
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -308,6 +309,10 @@ struct PetSittingRequestCell: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(primaryRed.opacity(0.3), lineWidth: 1)
+        )
     }
 }
 
