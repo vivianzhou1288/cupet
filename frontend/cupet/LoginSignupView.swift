@@ -93,7 +93,43 @@ struct LoginSignupView: View {
                         .stroke(fieldBorder, lineWidth: 1)
                 )
             
-            Button(action: { showingRoleSelection = true }) {
+            //https://stackoverflow.com/questions/72872898/login-screen-swiftui
+            //https://stackoverflow.com/questions/75531911/swiftui-firebase-authentication-persist-user-after-network-connectivity-got-los/75542103
+            Button(action: {
+                if isNewUser {
+                    // Call signup
+                    NetworkManager.shared.signup(
+                        name: "Cornell User",
+                        email: email,
+                        password: password,
+                        role: "owner") { result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success(let user):
+                                    UserManager.shared.currentUser = user
+                                    self.showingRoleSelection = true
+                                case .failure(let error):
+                                    print("Signup error: \(error.localizedDescription)")
+                                }
+                            }
+                        }
+                } else {
+                    NetworkManager.shared.login(
+                        email: email,
+                        password: password) { result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success(let user):
+                                    UserManager.shared.currentUser = user
+                                    self.showingRoleSelection = true
+                                case .failure(let error):
+                                    print("Login error: \(error.localizedDescription)")
+                                }
+                            }
+                        }
+                }
+            })
+            {
                 HStack {
                     Image(systemName: isNewUser ? "person.badge.plus" : "pawprint.circle")
                         .font(.system(size: 18))

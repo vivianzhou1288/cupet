@@ -184,18 +184,66 @@ struct PetSitterView: View {
     }
     
     // MARK: - Methods
+    // Replace your existing fetchPetSittingRequests method with this:
     @Sendable private func fetchPetSittingRequests() async {
         isLoading = true
         
-        // Replace with actual networking code
-        // Example:
-        // do {
-        //     petSittingRequests = try await NetworkManager.shared.fetchPetSittingRequests()
-        // } catch {
-        //     print("Error fetching pet sitting requests: \(error)")
-        // }
+        // Get preferences from UserDefaults
+        let petTypes = UserDefaults.standard.stringArray(forKey: "preferredPetTypes") ?? []
+        let activeness = UserDefaults.standard.stringArray(forKey: "selectedActiveness") ?? []
+        let locations = UserDefaults.standard.stringArray(forKey: "availableLocations") ?? []
         
-        // For demo purposes, populate with sample data
+        print("Retrieved preferences: \(petTypes), \(activeness), \(locations)")
+        
+        // Create a completion handler to handle async to await conversion
+        let fetchTask = Task { () -> [Pet] in
+            return await withCheckedContinuation { continuation in
+                NetworkManager.shared.fetchPets { result in
+                    switch result {
+                    case .success(let allPets):
+                        print("Fetched \(allPets.count) pets from server")
+                        
+                        // Filter based on preferences
+                        let filtered = allPets.filter { pet in
+                            let typeMatch = petTypes.isEmpty || petTypes.contains(pet.petType)
+                            let activenessMatch = activeness.isEmpty || activeness.contains(pet.activeness)
+                            let locationMatch = locations.isEmpty || locations.contains(pet.location)
+                            return typeMatch && activenessMatch && locationMatch
+                        }
+                        
+                        print("Filtered to \(filtered.count) pets")
+                        continuation.resume(returning: filtered)
+                    case .failure(let error):
+                        print("Error fetching pets: \(error.localizedDescription)")
+                        continuation.resume(returning: [])
+                    }
+                }
+            }
+        }
+        
+        do {
+            let pets = try await fetchTask.value
+            
+            // Update UI on main thread
+            await MainActor.run {
+                if !pets.isEmpty {
+                    self.petSittingRequests = pets
+                } else {
+                    // Load sample data if needed
+                    loadSamplePets()
+                }
+                isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                loadSamplePets()
+                isLoading = false
+            }
+        }
+    }
+
+    // Also add this helper method to load sample data if needed
+    private func loadSamplePets() {
         let dummyPet = Pet(
             id: 1,
             ownerId: 1,
@@ -209,35 +257,8 @@ struct PetSitterView: View {
             emailContact: "sample@cornell.edu"
         )
         
-        let petunia = Pet(
-            id: 3,
-            ownerId: 2,
-            name: "Petunia",
-            petType: "Stuffed Toy",
-            activeness: Activeness.low.rawValue,
-            description: "This is my childhood stuffed toy",
-            startDate: Date(),
-            endDate: Date().addingTimeInterval(86400 * 3), // 3 days later
-            location: DropOffLocation.west.rawValue,
-            emailContact: "sm2435@cornell.edu"
-        )
         
-        let max = Pet(
-            id: 7,
-            ownerId: 2,
-            name: "Max",
-            petType: "Dog",
-            activeness: Activeness.high.rawValue,
-            description: "Max is a friendly Golden Retriever who loves to play fetch and go for long walks.",
-            startDate: Date().addingTimeInterval(86400 * 5), // 5 days later
-            endDate: Date().addingTimeInterval(86400 * 8), // 8 days later
-            location: DropOffLocation.west.rawValue,
-            emailContact: "dog_lover@cornell.edu"
-        )
-        
-        petSittingRequests = [dummyPet, petunia, max]
-        
-        isLoading = false
+        petSittingRequests = [dummyPet]
     }
 }
 

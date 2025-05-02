@@ -266,9 +266,11 @@ struct AddPetView: View {
     
     // MARK: - Actions
     private func submitPet() {
+        let ownerId = UserManager.shared.currentUser?.id ?? 1
+        
         let newPet = Pet(
-            id: Int.random(in: 1...10000),
-            ownerId: 1,
+            id: 0,
+            ownerId: ownerId,
             name: petName.isEmpty ? "Unnamed Pet" : petName,
             petType: selectedType.rawValue,
             activeness: selectedActiveness.rawValue,
@@ -276,10 +278,22 @@ struct AddPetView: View {
             startDate: startDate,
             endDate: endDate,
             location: selectedLocation.rawValue,
-            emailContact: email.isEmpty ? "example@cornell.edu" : email
+            emailContact: email.isEmpty ? (UserManager.shared.currentUser?.email ?? "example@cornell.edu") : email
         )
         
-        onAddPet(newPet)
-        presentationMode.wrappedValue.dismiss()
+        NetworkManager.shared.addPet(pet: newPet) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let addedPet):
+                    self.onAddPet(addedPet)
+                    self.presentationMode.wrappedValue.dismiss()
+                case .failure(let error):
+                    print("Error adding pet: \(error.localizedDescription)")
+                    
+                    self.onAddPet(newPet)
+                    self.presentationMode.wrappedValue.dismiss()
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ struct OwnerHomeView: View {
     // MARK: - Properties
     @State private var showingAddPet = false
     @State private var pets: [Pet] = []
+    @State private var isLoading = false
     
     private let primaryRed = Color(hex: "B31B1B")
     private let bgColor = Color(hex: "FFFAF5")
@@ -20,7 +21,10 @@ struct OwnerHomeView: View {
         ZStack {
             bgColor.ignoresSafeArea()
             
-            if pets.isEmpty {
+            if isLoading {
+                ProgressView("Loading...")
+                    .foregroundColor(primaryRed)
+            } else if pets.isEmpty {
                 emptyState
             } else {
                 petsList
@@ -73,7 +77,7 @@ struct OwnerHomeView: View {
                     .cornerRadius(20)
             }
             .padding(.top, 10)
-                }
+        }
     }
     
     private var petsList: some View {
@@ -87,38 +91,51 @@ struct OwnerHomeView: View {
                 }
             }
             .padding()
-            }
+        }
     }
     
     // MARK: - Data Methods
     private func loadPets() {
-        // dummy data
-        if pets.isEmpty {
-            let sampleDate = Date()
-            // function from https://developer.apple.com/documentation/foundation/nscalendar/date(byadding:to:options:)
-            let endDate = Calendar.current.date(byAdding: .day, value: 5, to: sampleDate) ?? sampleDate
-            let dummyPet = Pet(
-                id: 1,
-                ownerId: 1,
-                name: "Buddy",
-                petType: PetType.dog.rawValue,
-                activeness: Activeness.medium.rawValue,
-                description: "Friendly golden retriever",
-                startDate: sampleDate,
-                endDate: endDate,
-                location: DropOffLocation.north.rawValue,
-                emailContact: "sample@cornell.edu"
-            )
-            pets = [dummyPet]
+        isLoading = true
+        
+        if let currentUser = UserManager.shared.currentUser {
+            NetworkManager.shared.fetchPets { result in
+                DispatchQueue.main.async {
+                    isLoading = false
+                    
+                    switch result {
+                    case .success(let allPets):
+                        let ownerPets = allPets.filter { $0.ownerId == currentUser.id }
+                        self.pets = ownerPets
+                        
+                    case .failure(let error):
+                        print("Error loading pets: \(error.localizedDescription)")
+                        self.pets = []
+                    }
+                }
             }
+        } else {
+            isLoading = false
+            pets = []
+        }
     }
     
     private func deletePet(id: Int) {
-        pets.removeAll { $0.id == id }
+        NetworkManager.shared.deletePet(id: id) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    self.pets.removeAll { $0.id == id }
+                case .failure(let error):
+                    print("Error deleting pet: \(error.localizedDescription)")
+                    self.pets.removeAll { $0.id == id }
+                }
+            }
+        }
     }
 }
 
-// MARK: - PetCardView
+
 struct PetCardView: View {
     // MARK: - Properties
     let pet: Pet
@@ -203,7 +220,6 @@ struct PetCardView: View {
     // MARK: - Helper Methods
     private func formatDateRange() -> String {
         let dateFormatter = DateFormatter()
-        // https://developer.apple.com/documentation/foundation/date/formatted(date:time:)
         dateFormatter.dateFormat = "MM/dd"
         return "\(dateFormatter.string(from: pet.startDate)) - \(dateFormatter.string(from: pet.endDate))"
     }

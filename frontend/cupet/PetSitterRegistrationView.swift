@@ -50,6 +50,7 @@ struct PetSitterRegistrationView: View {
                 }
                 
                 Button(action: {
+                    savePreferences()
                     navigateToBrowse = true
                 }) {
                     Text("Start Browsing Pets")
@@ -66,7 +67,6 @@ struct PetSitterRegistrationView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 30)
                 
-                // NavigationLink
                 NavigationLink(
                     destination: PetSitterView().navigationBarBackButtonHidden(true),
                     isActive: $navigateToBrowse,
@@ -104,6 +104,22 @@ struct PetSitterRegistrationView: View {
     private func isFormComplete() -> Bool {
         return !preferredPetTypes.isEmpty && !availableLocations.isEmpty && !selectedActiveness.isEmpty
     }
+    
+    // https://stackoverflow.com/questions/56518073/how-do-i-know-what-is-my-key-name-for-forkey-userdefault
+    private func savePreferences() {
+        let petTypeStrings = preferredPetTypes.map { $0.rawValue }
+        let activenessStrings = selectedActiveness.map { $0.rawValue }
+        let locationStrings = availableLocations.map { $0.rawValue }
+        
+        UserDefaults.standard.set(petTypeStrings, forKey: "preferredPetTypes")
+        UserDefaults.standard.set(activenessStrings, forKey: "selectedActiveness")
+        UserDefaults.standard.set(locationStrings, forKey: "availableLocations")
+        
+        UserDefaults.standard.synchronize()
+        
+        print("Saved preferences: \(petTypeStrings), \(activenessStrings), \(locationStrings)")
+    }
+    
 }
 
 struct SectionView<Content: View>: View {

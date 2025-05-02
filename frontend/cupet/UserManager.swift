@@ -35,7 +35,6 @@ class UserManager {
     }
     
     func loginUser(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        // Mock implementation for demo
         let dummyUser = User(id: 1, name: "Cornell Student", email: email, role: .sitter)
         self.currentUser = dummyUser
         completion(.success(dummyUser))

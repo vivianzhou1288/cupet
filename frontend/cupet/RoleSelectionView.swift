@@ -11,6 +11,12 @@ struct RoleSelectionView: View {
     // MARK: - Properties
     @State private var selectedRole: UserRole?
     @State private var navigateNext = false
+    @State private var isLoading = false
+    @State private var name: String = ""
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var showSignupSheet = false
+    
     @Environment(\.presentationMode) var presentationMode
     
     private let primaryRed = Color(hex: "B31B1B")
@@ -39,6 +45,15 @@ struct RoleSelectionView: View {
                 )
             }
             .padding(.horizontal, 25)
+            .disabled(isLoading)
+            
+            if isLoading {
+                ProgressView("Saving your preference...")
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -54,14 +69,16 @@ struct RoleSelectionView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showSignupSheet) {
+            signupView
+        }
     }
     
     // MARK: - UI Components
     private var roleButtons: some View {
         VStack(spacing: 25) {
             Button(action: {
-                selectedRole = .owner
-                navigateNext = true
+                selectRole(.owner)
             }) {
                 RoleCardView(
                     title: "Pet Owner",
@@ -72,8 +89,7 @@ struct RoleSelectionView: View {
             }
             
             Button(action: {
-                selectedRole = .sitter
-                navigateNext = true
+                selectRole(.sitter)
             }) {
                 RoleCardView(
                     title: "Pet Sitter",
@@ -81,6 +97,87 @@ struct RoleSelectionView: View {
                     iconName: "person.fill",
                     isSelected: selectedRole == .sitter
                 )
+            }
+        }
+    }
+    
+    private var signupView: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Create your account")) {
+                    TextField("Full Name", text: $name)
+                    TextField("Email", text: $email)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                    SecureField("Password", text: $password)
+                }
+                
+                Section {
+                    Button(action: {
+                        registerUser()
+                    }) {
+                        HStack {
+                            Spacer()
+                            Text("Sign Up")
+                                .foregroundColor(.white)
+                                .padding(.vertical, 10)
+                            Spacer()
+                        }
+                        .background(primaryRed)
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+            .navigationBarTitle("Sign Up", displayMode: .inline)
+            .navigationBarItems(
+                trailing: Button("Cancel") {
+                    showSignupSheet = false
+                }
+            )
+        }
+    }
+    
+    // MARK: - Actions
+    private func selectRole(_ role: UserRole) {
+        selectedRole = role
+        
+        if UserManager.shared.isUserLoggedIn() {
+            var user = UserManager.shared.currentUser!
+            user.role = role
+            UserManager.shared.currentUser = user
+            navigateNext = true
+        } else {
+            showSignupSheet = true
+        }
+    }
+    
+    private func registerUser() {
+        guard let selectedRole = selectedRole else { return }
+        
+        isLoading = true
+        
+        let roleString = selectedRole == .owner ? "owner" : "sitter"
+        
+        NetworkManager.shared.signup(
+            name: name,
+            email: email,
+            password: password,
+            role: roleString
+        ) { result in
+            DispatchQueue.main.async {
+                isLoading = false
+                
+                switch result {
+                case .success(let user):
+                    UserManager.shared.currentUser = user
+                    
+                    showSignupSheet = false
+                    navigateNext = true
+                    
+                case .failure:
+                    isLoading = false
+                }
             }
         }
     }
@@ -143,8 +240,4 @@ struct RoleCardView: View {
         )
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
-}
-
-#Preview {
-    RoleSelectionView()
 }
