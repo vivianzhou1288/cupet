@@ -12,10 +12,10 @@ CUPet helps Cornell students find reliable pet care on campus through a dual-int
 
 ## Team Members
 
-- **Ashley Huang** (ah859) - iOS Frontend Developer
-- **Shreya Majumdar** (sm2435) - iOS Frontend Developer  
-- **Vivian Zhou** (vz48) - Backend Developer
-- **Adam Farihin** (af642) - Backend Developer
+- **Ashley Huang** - iOS Frontend Developer
+- **Shreya Majumdar** - iOS Frontend Developer  
+- **Vivian Zhou** - Backend Developer
+- **Adam Farihin** - Backend Developer
 
 ## Demo
 
